@@ -8,7 +8,7 @@ namespace AmbientMusic
 {
     public class TAMEController
     {
-        private static SoundPlayer soundPlayer;
+        private static SoundPlayer soundPlayer; // yeah yeah stinky soundplayer what the fuck ever
         public static Timer timer;
         public static bool isPlaying = false;
         public static bool TimerRunning = false;
