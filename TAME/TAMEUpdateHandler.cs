@@ -13,7 +13,7 @@ namespace AmbientMusic
             var gameWorld = Singleton<GameWorld>.Instance;
 
             var r = Ready();
-            var iph = IsPlayerHurt();
+            
 
             if (!r)
             {
@@ -22,8 +22,11 @@ namespace AmbientMusic
                     TAMEController.timer.Stop(); // stop timer
                     TAMEController.ShutUp(); // stop music
                 }
+                return;
             }
-
+            
+            var iph = IsPlayerHurt();
+            
             if (!TAMEController.TimerRunning) // if timer isn't running
                 TAMEController.AmbienceTimer(); // run timer
 
