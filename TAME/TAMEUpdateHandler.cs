@@ -21,6 +21,7 @@ namespace AmbientMusic
                 {
                     TAMEController.timer.Stop(); // stop timer
                     TAMEController.ShutUp(); // stop music
+                    return;
                 }
                 return;
             }
