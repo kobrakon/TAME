@@ -12,10 +12,7 @@ namespace AmbientMusic
         {
             var gameWorld = Singleton<GameWorld>.Instance;
 
-            var r = Ready();
-            
-
-            if (!r)
+            if (!Ready())
             {
                 if (TAMEController.TimerRunning || TAMEController.isPlaying) // if session isn't ready and either the timer or music is active
                 {
@@ -26,12 +23,10 @@ namespace AmbientMusic
                 return;
             }
             
-            var iph = IsPlayerHurt();
-            
             if (!TAMEController.TimerRunning) // if timer isn't running
                 TAMEController.AmbienceTimer(); // run timer
 
-            if (iph) // if player is hurt
+            if (IsPlayerHurt()) // if player is hurt
             {
                 TAMEController.ShutUp(); // mute music
             }
