@@ -6,35 +6,33 @@ namespace AmbientMusic
 {
     public class UpdateHandler : MonoBehaviour
     {
-        private static float current = 0;
+        public static float current { get; private set; }; // evil floating point number
 
-        public void Update() // base unity mono method that checks and updates values every frame
+        public void Update()
         {
-            var gameWorld = Singleton<GameWorld>.Instance;
-
             if (!Ready())
             {
-                if (TAMEController.TimerRunning || TAMEController.isPlaying) // if session isn't ready and either the timer or music is active
+                if (TAMEController.TimerRunning || TAMEController.isPlaying)
                 {
-                    TAMEController.timer.Stop(); // stop timer
-                    TAMEController.ShutUp(); // stop music
+                    TAMEController.timer.Stop();
+                    TAMEController.ShutUp();
                     return;
                 }
                 return;
             }
             
-            if (!TAMEController.TimerRunning) // if timer isn't running
-                TAMEController.AmbienceTimer(); // run timer
+            if (!TAMEController.TimerRunning)
+                TAMEController.AmbienceTimer();
 
-            if (IsPlayerHurt()) // if player is hurt
+            if (IsPlayerHurt())
             {
-                TAMEController.ShutUp(); // mute music
+                TAMEController.ShutUp();
             }
 
-            current = gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current; // update health value
+            current = gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current;
         }
 
-        public bool IsPlayerHurt() // check if player is hurt
+        public static bool IsPlayerHurt()
         {
             var gameWorld = Singleton<GameWorld>.Instance;
 
@@ -42,11 +40,11 @@ namespace AmbientMusic
             {
                 var healthdiff = Mathf.Floor(current - gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current); // calculate health difference
 
-                if (healthdiff >= 50 && !TAMEController.eventIsRunning) // if health difference is greater than or equal to 50, and the near death event hasn't occured
+                if (healthdiff >= 50 && !TAMEController.eventIsRunning)
                 {
-                    return true; // return true
+                    return true;
                 }
-                return false; // not hurt? return false
+                return false;
             }
 
             return false;
@@ -54,17 +52,17 @@ namespace AmbientMusic
 
         public static bool IsPlayerBigHurt()
         {
-            if (current < 180) // if health is below 180
+            if (current < 180)
             {
-                return true; // return true
+                return true;
 
             } else // not dying?
             {
-                return false; // return false
+                return false;
             }
         }
 
-        bool Ready()
+        static bool Ready()
         {
             var gameWorld = Singleton<GameWorld>.Instance;
             var sessionResultPanel = Singleton<SessionResultPanel>.Instance;
