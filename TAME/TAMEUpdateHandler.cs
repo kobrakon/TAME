@@ -6,7 +6,8 @@ namespace AmbientMusic
 {
     public class UpdateHandler : MonoBehaviour
     {
-        public static float current { get; private set; }; // evil floating point number
+        public static float current { get; private set; } // evil floating point number
+        public GameWorld gameWorld = Singleton<GameWorld>.Instance;
 
         public void Update()
         {
@@ -20,33 +21,28 @@ namespace AmbientMusic
                 }
                 return;
             }
-            
+
             if (!TAMEController.TimerRunning)
                 TAMEController.AmbienceTimer();
 
-            if (IsPlayerHurt())
+            if (IsPlayerBigHurt())
             {
-                TAMEController.ShutUp();
+                TAMEController.PlayBigHurtAudio();
             }
 
             current = gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current;
         }
 
-        public static bool IsPlayerHurt()
+        public bool IsPlayerHurt()
         {
-            var gameWorld = Singleton<GameWorld>.Instance;
-
             if (current != 0)
             {
-                var healthdiff = Mathf.Floor(current - gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current); // calculate health difference
-
-                if (healthdiff >= 50 && !TAMEController.eventIsRunning)
+                if (HealthDiff(current) >= 50 && !TAMEController.eventIsRunning)
                 {
                     return true;
                 }
                 return false;
             }
-
             return false;
         }
 
@@ -56,26 +52,25 @@ namespace AmbientMusic
             {
                 return true;
 
-            } else // not dying?
-            {
-                return false;
             }
+            return false;
         }
 
-        static bool Ready()
+        bool Ready()
         {
-            var gameWorld = Singleton<GameWorld>.Instance;
-            var sessionResultPanel = Singleton<SessionResultPanel>.Instance;
+            if (gameWorld == null || gameWorld.AllPlayers == null || gameWorld.AllPlayers.Count == 0 || gameWorld.AllPlayers[0] is HideoutPlayer)
+            {
+                if (TAMEController.isPlaying)
+                    TAMEController.ShutUp();
 
-            // if the gameworld info doesn't exist, return false
-            if (gameWorld == null || gameWorld.AllPlayers == null || gameWorld.AllPlayers.Count == 0 || gameWorld.AllPlayers[0] is HideoutPlayer || sessionResultPanel != null)
-            {
                 return false;
-            } else
-            {
-                // if the gameworld is properly loaded, return true
-                return true;
             }
+            return true;
+        }
+
+        float HealthDiff(float val)
+        {
+            return Mathf.Floor(val - gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current); // calculate health differece, round down to avoid evil floating point inaccuracies
         }
     }
 }
