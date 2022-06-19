@@ -1,5 +1,4 @@
 using System.IO;
-using UnityEngine;
 using System.Media;
 using System.Timers;
 
@@ -39,8 +38,6 @@ namespace AmbientMusic
 
         public static void PlayMusicTime()
         {
-            var ipbh = UpdateHandler.IsPlayerBigHurt();
-
             if (!UpdateHandler.IsPlayerBigHurt())
             {
                 SoundPlayer("\\BepInEx\\plugins\\TAME\\Music\\Ambience");
