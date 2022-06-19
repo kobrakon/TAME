@@ -2,7 +2,6 @@ using System.IO;
 using System.Media;
 using System.Timers;
 
-
 namespace AmbientMusic
 {
     public class TAMEController
