@@ -1,75 +1,112 @@
 using System.IO;
-using System.Media;
+using UnityEngine;
 using System.Timers;
+using UnityEngine.Networking;
+using System.Collections.Generic;
 
 namespace AmbientMusic
 {
     public class TAMEController
     {
-        private static SoundPlayer soundPlayer; // yeah yeah stinky soundplayer what the fuck ever
-        public static Timer timer;
-        public static bool isPlaying { get; set; } = false;
-        public static bool TimerRunning { get; set; } = false;
-        public static bool eventIsRunning { get; set; } = false;
+        private static Timer timer;
+        private static List<AudioClip> MusicList = new List<AudioClip>();
+        private static List<AudioClip> NDEMusicList = new List<AudioClip>();
+        public static string AmbientMusicPath = BepInEx.Paths.PluginPath + "TAME\\Music\\Ambience";
+        public static string NDEMusicPath = BepInEx.Paths.PluginPath + "TAME\\Music\\NDE";
+        private static AudioSource playerAudioSource;
+        private static bool _timerInstanceActive = false;
+        public static int musicVolume { get; set; }
 
-        public static void AmbienceTimer()
+        public static void StartAmbienceTimer()
         {
-            timer = new Timer(Random.Range(300000, 600000));
-            timer.Start();
-            TimerRunning = true;
+            if (_timerInstanceActive) return;
 
-            timer.Elapsed += (sender, e) => PlayMusicTime(); // okay so literally nothing uses the sender and e args but the timer is a little bitch and refuses to run the event without them
-
-            timer.AutoReset = true;
-
+            timer = new Timer(Random.Range(600000, 720000));
             timer.Enabled = true;
+            timer.Elapsed += (sender, e) => PlayAmbientMusic();
+            timer.Start();
+            _timerInstanceActive = true;
+            timer.AutoReset = true;
         }
 
-        public static void PlayBigHurtAudio()
+        public static void RevokeMusic()
         {
-            SoundPlayer("\\BepInEx\\plugins\\TAME\\Music\\NDE");
-
-            isPlaying = true;
-            eventIsRunning = true;
-
-            soundPlayer.PlaySync();
-        }
-
-        public static void PlayMusicTime()
-        {
-            if (!UpdateHandler.IsPlayerBigHurt())
-            {
-                SoundPlayer("\\BepInEx\\plugins\\TAME\\Music\\Ambience");
-
-                isPlaying = true;
-
-                soundPlayer.PlaySync();
-
-                isPlaying = false;
-                AmbienceTimer();
-            }
-            return;
-        }
-
-        public static void ShutUp()
-        {
-            soundPlayer.Stop();
             timer.Stop();
+            timer.Enabled = false;
 
-            isPlaying = false;
+            if (playerAudioSource == null) return;
+            playerAudioSource.Stop();
+            playerAudioSource.clip = null;
+            _timerInstanceActive = false;
         }
 
-        private static SoundPlayer SoundPlayer(string fullpath)
+        // stop audioplayer and dispose of active timer instance
+        public static void EndMusic() { playerAudioSource.Stop(); playerAudioSource.clip = null; timer.Dispose(); _timerInstanceActive = false; }
+
+        public static void PlayAmbientMusic()
         {
-            var path = Directory.GetFiles(Directory.GetCurrentDirectory() + fullpath, "*.wav");
-            int choices = Random.Range(0, path.Length);
+            var comp = UpdateHandler.player.GetComponent<AudioSource>();
 
-            soundPlayer = new SoundPlayer
+            if (comp == null) UpdateHandler.player.AddComponent<AudioSource>();
+
+            playerAudioSource = comp;
+
+            if (playerAudioSource.isPlaying) return;
+
+            playerAudioSource.clip = MusicList.RandomElement();
+            playerAudioSource.Play(0);
+
+            while (playerAudioSource.isPlaying)
             {
-                SoundLocation = path[choices]
-            };
+                playerAudioSource.volume = musicVolume;
+                if (!playerAudioSource.isPlaying) { EndMusic(); break; }
+                continue;
+            }
+        }
 
-            return soundPlayer;
+        public static async void RequestClips(string path, AudioType audioType, List<AudioClip> list)
+        {
+            using (UnityWebRequest req = UnityWebRequestMultimedia.GetAudioClip(path, audioType))
+            {
+                var request = req.SendWebRequest();
+
+                while (!request.isDone)
+                {
+                    await request.Await();
+                }
+
+                if (req.isNetworkError || req.isHttpError) { Plugin.logger.LogError($"Failed to retrieve file from {path}"); return; }
+
+                AudioClip clip = DownloadHandlerAudioClip.GetContent(req);
+                list.Add(clip);
+            }
+        }
+
+        public static void GetAudio()
+        {
+            string[] files = Directory.GetFiles(AmbientMusicPath);
+
+            foreach (var file in files)
+            {
+                string url = "file:///" + file.Replace("\\", "/");
+
+                if (file.Contains(".wav")) { RequestClips(url, AudioType.WAV, MusicList); }
+                else if (file.Contains(".mp3")) { RequestClips(url, AudioType.MPEG, MusicList);  }
+                else if (file.Contains("ogg")) { RequestClips(url, AudioType.OGGVORBIS, MusicList); }
+                RequestClips(url, AudioType.UNKNOWN, MusicList);
+            }
+
+            string[] ndeFiles = Directory.GetFiles(NDEMusicPath);
+
+            foreach (var file in ndeFiles)
+            {
+                string url = "file:///" + file.Replace("\\", "/");
+
+                if (file.Contains(".wav")) { RequestClips(url, AudioType.WAV, MusicList); }
+                else if (file.Contains(".mp3")) { RequestClips(url, AudioType.MPEG, MusicList); }
+                else if (file.Contains("ogg")) { RequestClips(url, AudioType.OGGVORBIS, MusicList); }
+                RequestClips(url, AudioType.UNKNOWN, MusicList);
+            }
         }
     }
 }
