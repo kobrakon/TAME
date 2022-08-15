@@ -102,10 +102,10 @@ namespace AmbientMusic
             {
                 string url = "file:///" + file.Replace("\\", "/");
 
-                if (file.Contains(".wav")) { RequestClips(url, AudioType.WAV, MusicList); }
-                else if (file.Contains(".mp3")) { RequestClips(url, AudioType.MPEG, MusicList); }
-                else if (file.Contains("ogg")) { RequestClips(url, AudioType.OGGVORBIS, MusicList); }
-                RequestClips(url, AudioType.UNKNOWN, MusicList);
+                if (file.Contains(".wav")) { RequestClips(url, AudioType.WAV, NDEMusicList); }
+                else if (file.Contains(".mp3")) { RequestClips(url, AudioType.MPEG, NDEMusicList); }
+                else if (file.Contains("ogg")) { RequestClips(url, AudioType.OGGVORBIS, NDEMusicList); }
+                RequestClips(url, AudioType.UNKNOWN, NDEMusicList);
             }
         }
     }
