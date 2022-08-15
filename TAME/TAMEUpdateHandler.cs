@@ -7,70 +7,23 @@ namespace AmbientMusic
     public class UpdateHandler : MonoBehaviour
     {
         public static float current { get; private set; } // evil floating point number
-        public GameWorld gameWorld = Singleton<GameWorld>.Instance;
+        public GameWorld gameWorld;
+        public static GameObject player;
 
         public void Update()
         {
-            if (!Ready())
-            {
-                if (TAMEController.TimerRunning || TAMEController.isPlaying)
-                {
-                    TAMEController.timer.Stop();
-                    TAMEController.ShutUp();
-                    return;
-                }
-                return;
-            }
+            gameWorld = Singleton<GameWorld>.Instance;
 
-            if (!TAMEController.TimerRunning)
-                TAMEController.AmbienceTimer();
+            if (!Ready()) { TAMEController.RevokeMusic(); return; }
 
-            if (IsPlayerBigHurt())
-            {
-                TAMEController.PlayBigHurtAudio();
-            }
-
+            player = GameObject.Find("PlayerSuperior(Clone)");
             current = gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current;
+            TAMEController.StartAmbienceTimer();
         }
 
-        public bool IsPlayerHurt()
-        {
-            if (current != 0)
-            {
-                if (HealthDiff(current) >= 50 && !TAMEController.eventIsRunning)
-                {
-                    return true;
-                }
-                return false;
-            }
-            return false;
-        }
-
-        public static bool IsPlayerBigHurt()
-        {
-            if (current < 180)
-            {
-                return true;
-
-            }
-            return false;
-        }
-
-        bool Ready()
-        {
-            if (gameWorld == null || gameWorld.AllPlayers == null || gameWorld.AllPlayers.Count == 0 || gameWorld.AllPlayers[0] is HideoutPlayer)
-            {
-                if (TAMEController.isPlaying)
-                    TAMEController.ShutUp();
-
-                return false;
-            }
-            return true;
-        }
-
-        float HealthDiff(float val)
-        {
-            return Mathf.Floor(val - gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current); // calculate health differece, round down to avoid evil floating point inaccuracies
-        }
+        bool IsPlayerHurt() => current == gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current ? return false : return true;
+        bool IsPlayerBigHurt() => HealthDiff(current) >= 50 ? true : false;
+        bool Ready() => Singleton<GameWorld>.Instantiated ? true : false;
+        float HealthDiff(float val) => Mathf.Floor(val - gameWorld.AllPlayers[0].HealthController.GetBodyPartHealth(EBodyPart.Common).Current);
     }
 }
